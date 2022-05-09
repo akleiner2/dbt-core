@@ -73,7 +73,6 @@ class TestRuntimeMaterialization(DBTIntegrationTest):
         # Again, but against the incremental materialization
         self.run_dbt(['run', '--model', 'incremental'])
         self.run_sql_file("create_incremental__dbt_tmp.sql")
-        import ipdb; ipdb.set_trace()
         results = self.run_dbt(['run', '--model', 'incremental', '--full-refresh'])
         self.assertEqual(len(results), 1)
 
