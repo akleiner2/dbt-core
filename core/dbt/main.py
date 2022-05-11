@@ -537,7 +537,7 @@ def _build_parse_subparser(subparsers, base_subparser):
         "parse",
         parents=[base_subparser],
         help="""
-        Parsed the project and provides information on performance
+        Parses the project and provides information on performance
         """,
     )
     sub.set_defaults(cls=parse_task.ParseTask, which="parse", rpc_method="parse")
@@ -1085,6 +1085,36 @@ def parse_args(args, cls=DBTArgumentParser):
         help="""
         Suppress all non-error logging to stdout. Does not affect
         {{ print() }} macro calls.
+        """,
+    )
+
+    p.add_argument(
+        "--no-print",
+        action="store_true",
+        default=None,
+        help="""
+        Suppress all {{ print() }} macro calls.
+        """,
+    )
+
+    schema_cache_flag = p.add_mutually_exclusive_group()
+    schema_cache_flag.add_argument(
+        "--cache-selected-only",
+        action="store_const",
+        const=True,
+        default=None,
+        dest="cache_selected_only",
+        help="""
+        Pre cache database objects relevant to selected resource only.
+        """,
+    )
+    schema_cache_flag.add_argument(
+        "--no-cache-selected-only",
+        action="store_const",
+        const=False,
+        dest="cache_selected_only",
+        help="""
+        Pre cache all database objects related to the project.
         """,
     )
 

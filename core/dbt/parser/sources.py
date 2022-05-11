@@ -1,6 +1,6 @@
 import itertools
 from pathlib import Path
-from typing import Iterable, Dict, Optional, Set, List, Any
+from typing import Iterable, Dict, Optional, Set, Any
 from dbt.adapters.factory import get_adapter
 from dbt.config import RuntimeConfig
 from dbt.context.context_config import (
@@ -63,7 +63,7 @@ class SourcePatcher:
                 self.sources[unpatched.unique_id] = unpatched
                 continue
             # returns None if there is no patch
-            patch = self.get_patch_for(unpatched)
+            patch = self.get_patch_for(unpatched)  # type: ignore[unreachable] # CT-564 / GH 5169
 
             # returns unpatched if there is no patch
             patched = self.patch_source(unpatched, patch)
@@ -137,15 +137,13 @@ class SourcePatcher:
         tags = sorted(set(itertools.chain(source.tags, table.tags)))
 
         config = self._generate_source_config(
-            fqn=target.fqn,
+            target=target,
             rendered=True,
-            project_name=target.package_name,
         )
 
         unrendered_config = self._generate_source_config(
-            fqn=target.fqn,
+            target=target,
             rendered=False,
-            project_name=target.package_name,
         )
 
         if not isinstance(config, SourceConfig):
@@ -215,8 +213,8 @@ class SourcePatcher:
         self,
         unpatched: UnpatchedSourceDefinition,
     ) -> Optional[SourcePatch]:
-        if isinstance(unpatched, ParsedSourceDefinition):
-            return None
+        if isinstance(unpatched, ParsedSourceDefinition):  # type: ignore[unreachable] # CT-564 / GH 5169
+            return None  # type: ignore[unreachable] # CT-564 / GH 5169
         key = (unpatched.package_name, unpatched.source.name)
         patch: Optional[SourcePatch] = self.manifest.source_patches.get(key)
         if patch is None:
@@ -261,19 +259,29 @@ class SourcePatcher:
         )
         return node
 
-    def _generate_source_config(self, fqn: List[str], rendered: bool, project_name: str):
+    def _generate_source_config(self, target: UnpatchedSourceDefinition, rendered: bool):
         generator: BaseContextConfigGenerator
         if rendered:
             generator = ContextConfigGenerator(self.root_project)
         else:
             generator = UnrenderedConfigGenerator(self.root_project)
 
+        # configs with precendence set
+        precedence_configs = dict()
+        # first apply source configs
+        precedence_configs.update(target.source.config)
+        # then overrite anything that is defined on source tables
+        # this is not quite complex enough for configs that can be set as top-level node keys, but
+        # it works while source configs can only include `enabled`.
+        precedence_configs.update(target.table.config)
+
         return generator.calculate_node_config(
             config_call_dict={},
-            fqn=fqn,
+            fqn=target.fqn,
             resource_type=NodeType.Source,
-            project_name=project_name,
+            project_name=target.package_name,
             base=False,
+            patch_config_dict=precedence_configs,
         )
 
     def _get_relation_name(self, node: ParsedSourceDefinition):

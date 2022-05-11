@@ -52,9 +52,10 @@ jobs:
           pip --version
           pip install pre-commit
           pre-commit --version
-          pip install mypy==0.782
+          pip install mypy==0.942
           mypy --version
-          pip install -r editable-requirements.txt
+          pip install -r requirements.txt
+          pip install -r dev-requirements.txt
           dbt --version
 
       - name: Run pre-commit hooks
@@ -68,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     env:
       TOXENV: "unit"
@@ -112,7 +113,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
         os: [ubuntu-latest]
         include:
           - python-version: 3.8

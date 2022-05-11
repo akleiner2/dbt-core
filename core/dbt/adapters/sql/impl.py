@@ -171,6 +171,7 @@ class SQLAdapter(BaseAdapter):
             "relation": relation,
         }
         self.execute_macro(DROP_SCHEMA_MACRO_NAME, kwargs=kwargs)
+        self.commit_if_has_connection()
         # we can update the cache here
         self.cache.drop_schema(relation.database, relation.schema)
 
@@ -227,11 +228,7 @@ class SQLAdapter(BaseAdapter):
             if hasattr(conn.handle, "commit"):
                 conn.handle.commit()
             if fetch == "one":
-                if hasattr(cursor, "fetchone"):  # for spark
-                    return cursor.fetchone()
-                else:
-                    # for spark
-                    return cursor.fetchall()[0]
+                return cursor.fetchone()
             elif fetch == "all":
                 return cursor.fetchall()
             else:
